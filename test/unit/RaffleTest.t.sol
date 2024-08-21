@@ -8,7 +8,8 @@ import {DeployRaffle} from "script/DeployRaffle.s.sol";
 import {Raffle} from "src/Raffle.sol";
 import {CodeConstant} from "script/HelperConfig.s.sol";
 import {HelperConfig} from "script/HelperConfig.s.sol";
-import {VRFCoordinatorV2_5Mock} from "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
+import {VRFCoordinatorV2_5Mock} from
+    "lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
 contract RaffleTest is Test, CodeConstant {
     Raffle public raffle;
@@ -43,10 +44,7 @@ contract RaffleTest is Test, CodeConstant {
     }
 
     function testRaffleInicilizesInOpenState() public view {
-        assert(
-            Raffle.RaffleState(raffle.getRaffleState()) ==
-                Raffle.RaffleState.OPEN
-        );
+        assert(Raffle.RaffleState(raffle.getRaffleState()) == Raffle.RaffleState.OPEN);
     }
 
     function testRaffleRevertsWhenYouDontPayEnough() public {
@@ -103,7 +101,7 @@ contract RaffleTest is Test, CodeConstant {
         vm.roll(block.number + 1);
 
         //Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeeep("");
 
         //Assert
         assert(!upkeepNeeded);
@@ -118,7 +116,7 @@ contract RaffleTest is Test, CodeConstant {
         raffle.performUpkeep("");
 
         //Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeeep("");
 
         //Assert
         assert(!upkeepNeeded);
@@ -133,7 +131,7 @@ contract RaffleTest is Test, CodeConstant {
         raffle.performUpkeep("");
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeeep("");
 
         // Assert
         assert(!upkeepNeeded);
@@ -146,7 +144,7 @@ contract RaffleTest is Test, CodeConstant {
         vm.roll(block.number + 1);
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeeep("");
 
         // Assert
         assert(!upkeepNeeded);
@@ -161,7 +159,7 @@ contract RaffleTest is Test, CodeConstant {
         vm.roll(block.number + 1);
 
         // Act
-        (bool upkeepNeeded, ) = raffle.checkUpkeeep("");
+        (bool upkeepNeeded,) = raffle.checkUpkeeep("");
 
         // Assert
         assert(upkeepNeeded);
@@ -176,10 +174,7 @@ contract RaffleTest is Test, CodeConstant {
         // Act / Assert
         vm.expectRevert(
             abi.encodeWithSelector(
-                Raffle.Raffle__UpkeepNotNeeded.selector,
-                address(raffle).balance,
-                0,
-                uint256(Raffle.RaffleState.OPEN)
+                Raffle.Raffle__UpkeepNotNeeded.selector, address(raffle).balance, 0, uint256(Raffle.RaffleState.OPEN)
             )
         );
         raffle.performUpkeep("");
@@ -197,9 +192,7 @@ contract RaffleTest is Test, CodeConstant {
         raffle.performUpkeep("");
 
         // Assert
-        assert(
-            raffle.getRaffleState() == uint256(Raffle.RaffleState.CALCULATING)
-        );
+        assert(raffle.getRaffleState() == uint256(Raffle.RaffleState.CALCULATING));
     }
 
     //data from emits
@@ -211,10 +204,7 @@ contract RaffleTest is Test, CodeConstant {
         _;
     }
 
-    function testPreformUpkeepUpdatesRaffleStateAndEmitsRequestID()
-        public
-        raffleEntered
-    {
+    function testPreformUpkeepUpdatesRaffleStateAndEmitsRequestID() public raffleEntered {
         //Arrange
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
@@ -245,32 +235,23 @@ contract RaffleTest is Test, CodeConstant {
         _;
     }
 
-    function testFufillRandomWordsCanOnlyBecalledAfterperformUpKeep(
-        uint256 randomRequestId
-    ) public raffleEntered skipFork {
-        //Arrange /Act /Assert
-        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
-        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
-            randomRequestId,
-            address(raffle)
-        );
-    }
-
-    function testFulfillrandomWordsPicksAWinnerResertsAndSendsMoney()
+    function testFufillRandomWordsCanOnlyBecalledAfterperformUpKeep(uint256 randomRequestId)
         public
         raffleEntered
         skipFork
     {
+        //Arrange /Act /Assert
+        vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(randomRequestId, address(raffle));
+    }
+
+    function testFulfillrandomWordsPicksAWinnerResertsAndSendsMoney() public raffleEntered skipFork {
         // Arrange
         uint256 additionalEntrances = 3; // 4 total
         uint256 startingIndex = 1;
         address expectedWinner = address(1);
 
-        for (
-            uint256 i = startingIndex;
-            i < startingIndex + additionalEntrances;
-            i++
-        ) {
+        for (uint256 i = startingIndex; i < startingIndex + additionalEntrances; i++) {
             address newPlayer = address(uint160(i));
             hoax(newPlayer, 1 ether);
             raffle.enterRaffle{value: entranceFee}();
@@ -283,16 +264,11 @@ contract RaffleTest is Test, CodeConstant {
         raffle.performUpkeep("");
         Vm.Log[] memory entries = vm.getRecordedLogs();
         bytes32 requestId = entries[1].topics[1];
-        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(
-            uint256(requestId),
-            address(raffle)
-        );
+        VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(uint256(requestId), address(raffle));
 
         // Assert
         address recentWinner = raffle.getRecentWinner();
-        Raffle.RaffleState raffleState = Raffle.RaffleState(
-            raffle.getRaffleState()
-        ); // Cast uint256 to enum type
+        Raffle.RaffleState raffleState = Raffle.RaffleState(raffle.getRaffleState()); // Cast uint256 to enum type
         uint256 winnerBalance = recentWinner.balance;
         uint256 endingTimeStamp = raffle.getLastTimeStamp();
         uint256 prize = entranceFee * (additionalEntrances + 1);
